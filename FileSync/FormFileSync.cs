@@ -3,17 +3,21 @@ using Microsoft.VisualBasic.FileIO;
 namespace FileSync
 {
     //TODO: fazer em uma thread separada
-    //TODO: soncronizar diretórios primeiro
+    //TODO: sincronizar diretórios primeiro
     //TODO: tratar exceção pra cada arquivo pra não parar
-    //TODO: 
+    //TODO: botão Stop
 
     public partial class FormFileSync : Form
     {
         List<string> sourceFiles = new List<string>();
         List<string> targetFiles = new List<string>();
+        List<string> sourceFolders = new List<string>();
+        List<string> targetFolders = new List<string>();
         List<string> deleteFiles = new List<string>();
         List<string> addFiles = new List<string>();
-        List<string> modifyFiles = new List<string>();
+        List<string> updateFiles = new List<string>();
+        List<string> addFolders = new List<string>();
+        List<string> deleteFolders = new List<string>();
 
         public FormFileSync()
         {
@@ -38,76 +42,29 @@ namespace FileSync
         {
             try
             {
-                labelFileSync.Text = "-";
-                labelFileSync.Refresh();
-                listBoxAdd.Items.Clear();
-                listBoxAdd.Refresh();
-                listBoxModify.Items.Clear();
-                listBoxModify.Refresh();
-                listBoxDelete.Items.Clear();
-                listBoxDelete.Refresh();
+                ClearItems();
 
-                addFiles.Clear();
-                modifyFiles.Clear();
-                deleteFiles.Clear();
-
-                if (textBoxSource.Text == "") return;
-
-                if (textBoxTarget.Text == "") return;
-
-                sourceFiles = Directory.GetFiles(textBoxSource.Text, "*", System.IO.SearchOption.AllDirectories).ToList();
-                targetFiles = Directory.GetFiles(textBoxTarget.Text, "*", System.IO.SearchOption.AllDirectories).ToList();
-
-                progressBar1.Minimum = 0;
-                progressBar1.Maximum = sourceFiles.Count;
-                progressBar1.Value = 0;
-
-                // Synchronize files
-                foreach (string sourceFilePath in sourceFiles)
+                if (!ValidateSourceAndTarget())
                 {
-                    progressBar1.Value += 1;
-                    progressBar1.Refresh();
-
-                    string relativePath = GetRelativePath(textBoxSource.Text, sourceFilePath);
-                    string targetFilePath = Path.Combine(textBoxTarget.Text, relativePath);
-
-                    if (!File.Exists(targetFilePath))
-                    {
-                        addFiles.Add(sourceFilePath);
-                        listBoxAdd.Items.Add(sourceFilePath);
-                        listBoxAdd.Refresh();
-                    }
-                    else if (File.GetLastWriteTime(sourceFilePath) > File.GetLastWriteTime(targetFilePath))
-                    {
-                        modifyFiles.Add(sourceFilePath);
-                        listBoxModify.Items.Add(sourceFilePath);
-                        listBoxModify.Refresh();
-                    }
-                    else
-                    {
-                        foreach (string targetFile in targetFiles)
-                        {
-                            relativePath = GetRelativePath(textBoxTarget.Text, targetFile);
-                            targetFilePath = Path.Combine(textBoxSource.Text, relativePath);
-
-                            if (!File.Exists(sourceFilePath))
-                            {
-                                deleteFiles.Add(targetFilePath);
-                                listBoxDelete.Items.Add(targetFilePath);
-                                listBoxDelete.Refresh();
-                            }
-                        }
-                    }
+                    labelStatus.Text = "Inform the source and the target directory";
+                    return;
                 }
 
-                if (addFiles.Count + modifyFiles.Count + deleteFiles.Count == 0)
+                SetSourceTargetLists();
+
+                SetLists();
+
+                if (CountSyncItems() == 0)
                 {
-                    labelFileSync.Text = "The target folder is up to date";
-                    labelFileSync.Refresh();
+                    labelStatus.Text = "The target folder is up to date";
+                    labelStatus.Refresh();
                 }
+
+                UpdateLabelsLists();
             }
             catch (Exception ex)
             {
+                labelStatus.Text = "-";
                 MessageBox.Show(ex.Message);
             }
         }
@@ -116,83 +73,259 @@ namespace FileSync
         {
             try
             {
-                labelFileSync.Text = "-";
+                labelStatus.Text = "-";
 
-                if (addFiles.Count == 0 && modifyFiles.Count == 0 && deleteFiles.Count == 0)
+                if (CountSyncItems() == 0)
                 {
-                    labelFileSync.Text = "No files synced";
-                    labelFileSync.Refresh();
+                    labelStatus.Text = "No files synced";
+                    labelStatus.Refresh();
                     return;
                 }
 
                 progressBar1.Minimum = 0;
-                progressBar1.Maximum = addFiles.Count + modifyFiles.Count + deleteFiles.Count;
+                progressBar1.Maximum = CountSyncItems();
                 progressBar1.Value = 0;
 
-                var dir = "";
+                AddFolders();
 
-                foreach (var file in addFiles)
-                {
-                    var targetFile = Path.Combine(textBoxTarget.Text, GetRelativePath(textBoxSource.Text, file));
+                DeleteFolders();
 
-                    progressBar1.Value += 1;
-                    progressBar1.Refresh();
-                    labelFileSync.Text = "Copying " + file;
-                    labelFileSync.Refresh();
+                AddFiles();
 
-                    dir = Path.GetDirectoryName(targetFile);
+                UpdateFiles();
 
-                    if (!Directory.Exists(targetFile))
-                    {
-                        if (dir != null)
-                        {
-                            Directory.CreateDirectory(dir);
-                        }
-                    }
+                DeleteFiles();
 
-                    File.Copy(file, targetFile);
-                }
-
-                foreach (var file in modifyFiles)
-                {
-                    var targetFile = Path.Combine(textBoxTarget.Text, GetRelativePath(textBoxSource.Text, file));
-
-                    progressBar1.Value += 1;
-                    progressBar1.Refresh();
-                    labelFileSync.Text = "Copying " + file;
-                    labelFileSync.Refresh();
-
-                    File.Copy(file, targetFile, true);
-                }
-
-                foreach (var file in deleteFiles)
-                {
-                    progressBar1.Value += 1;
-                    progressBar1.Refresh();
-                    labelFileSync.Text = "Deleting " + file;
-                    labelFileSync.Refresh();
-
-                    FileSystem.DeleteFile(file,
-                      UIOption.OnlyErrorDialogs,
-                      RecycleOption.SendToRecycleBin);
-                }
-
-                labelFileSync.Text = "Finished";
-                labelFileSync.Refresh();
+                labelStatus.Text = "Finished";
+                labelStatus.Refresh();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                labelStatus.Text = "-";
                 MessageBox.Show(ex.Message);
             }
         }
 
+        private int CountSyncItems()
+        {
+            return addFolders.Count + deleteFolders.Count + addFiles.Count + updateFiles.Count + deleteFiles.Count;
+        }
+
+        private void DeleteFiles()
+        {
+            foreach (var file in deleteFiles)
+            {
+                progressBar1.Value += 1;
+                progressBar1.Refresh();
+                labelStatus.Text = "Deleting " + file;
+                labelStatus.Refresh();
+
+                FileSystem.DeleteFile(file,
+                  UIOption.OnlyErrorDialogs,
+                  RecycleOption.SendToRecycleBin);
+            }
+        }
+
+        private void UpdateFiles()
+        {
+            foreach (var file in updateFiles)
+            {
+                var targetFile = Path.Combine(textBoxTarget.Text, GetRelativePath(textBoxSource.Text, file));
+
+                progressBar1.Value += 1;
+                progressBar1.Refresh();
+                labelStatus.Text = "Copying " + file;
+                labelStatus.Refresh();
+
+                File.Copy(file, targetFile, true);
+            }
+        }
+
+        private void AddFiles()
+        {
+            foreach (var file in addFiles)
+            {
+                var targetFile = Path.Combine(textBoxTarget.Text, GetRelativePath(textBoxSource.Text, file));
+
+                progressBar1.Value += 1;
+                progressBar1.Refresh();
+                labelStatus.Text = "Copying " + file;
+                labelStatus.Refresh();
+
+                File.Copy(file, targetFile);
+            }
+        }
+
+        private void DeleteFolders()
+        {
+
+            // Delete folders
+            foreach (var folder in deleteFolders)
+            {
+                Directory.Delete(folder, true);
+                progressBar1.Value += 1;
+                progressBar1.Refresh();
+                labelStatus.Text = "Deleting " + folder;
+                labelStatus.Refresh();
+            }
+        }
+
+        private void AddFolders()
+        {
+
+            // Create folders
+            foreach (var folder in addFolders)
+            {
+                var targetFolder = Path.Combine(textBoxTarget.Text, GetRelativePath(textBoxSource.Text, folder));
+                Directory.CreateDirectory(targetFolder);
+                progressBar1.Value += 1;
+                progressBar1.Refresh();
+                labelStatus.Text = "Creating " + targetFolder;
+                labelStatus.Refresh();
+            }
+        }
+
+        private void UpdateLabelsLists()
+        {
+            labelAdd.Text = (addFolders.Count + addFiles.Count).ToString();
+            labelModify.Text = updateFiles.Count.ToString();
+            labelDelete.Text = (deleteFolders.Count + deleteFiles.Count).ToString();
+        }
+
+        private void SetSourceTargetLists()
+        {
+            sourceFolders = Directory.GetDirectories(textBoxSource.Text, "*", System.IO.SearchOption.AllDirectories).ToList();
+            sourceFiles = Directory.GetFiles(textBoxSource.Text, "*", System.IO.SearchOption.AllDirectories).ToList();
+
+            targetFolders = Directory.GetDirectories(textBoxTarget.Text, "*", System.IO.SearchOption.AllDirectories).ToList();
+            targetFiles = Directory.GetFiles(textBoxTarget.Text, "*", System.IO.SearchOption.AllDirectories).ToList();
+
+            progressBar1.Minimum = 0;
+            progressBar1.Maximum = sourceFiles.Count;
+            progressBar1.Value = 0;
+        }
+
+        private bool ValidateSourceAndTarget()
+        {
+            if (textBoxSource.Text == "" || textBoxTarget.Text == "") return false;
+
+            return true;
+        }
+
+        private void SetLists()
+        {
+            var relativePath = "";
+            var sourcePath = "";
+            var sourceDir = "";
+            var targetFilePath = "";
+            var targetDir = "";
+
+            // Find directories to create
+            foreach (var item in sourceFolders)
+            {
+                relativePath = GetRelativePath(textBoxSource.Text, item);
+
+                targetDir = Path.Combine(textBoxTarget.Text, relativePath);
+
+                if (!Directory.Exists(targetDir))
+                {
+                    addFolders.Add(item);
+                    listBoxAdd.Items.Add(relativePath + "\\");
+                    listBoxAdd.Refresh();
+                }
+            }
+
+            // Find directories to delete
+            foreach (var item in targetFolders)
+            {
+                relativePath = GetRelativePath(textBoxTarget.Text, item);
+
+                sourceDir = Path.Combine(textBoxSource.Text, relativePath);
+
+                if (!Directory.Exists(sourceDir))
+                {
+                    deleteFolders.Add(item);
+                    listBoxDelete.Items.Add(relativePath + "\\");
+                    listBoxDelete.Refresh();
+                }
+            }
+
+            // Find files to add
+            foreach (string item in sourceFiles)
+            {
+                progressBar1.Value += 1;
+                progressBar1.Refresh();
+
+                relativePath = GetRelativePath(textBoxSource.Text, item);
+                targetFilePath = Path.Combine(textBoxTarget.Text, relativePath);
+
+                if (!File.Exists(targetFilePath))
+                {
+                    addFiles.Add(item);
+                    listBoxAdd.Items.Add(relativePath);
+                    listBoxAdd.Refresh();
+                }
+                else if (File.GetLastWriteTime(item) > File.GetLastWriteTime(targetFilePath))
+                {
+                    updateFiles.Add(item);
+                    listBoxUpdate.Items.Add(relativePath);
+                    listBoxUpdate.Refresh();
+                }
+            }
+
+            // Find files to delete
+            foreach (string item in targetFiles)
+            {
+                relativePath = GetRelativePath(textBoxTarget.Text, item);
+                sourcePath = Path.Combine(textBoxSource.Text, relativePath);
+
+                if (!File.Exists(sourcePath))
+                {
+                    deleteFiles.Add(item);
+                    listBoxDelete.Items.Add(relativePath);
+                    listBoxDelete.Refresh();
+                }
+            }
+
+            RemoveFilesToDelete();
+        }
+
         public static string GetRelativePath(string basePath, string fullPath)
         {
-            // Ensure the paths are properly normalized
             basePath = Path.GetFullPath(basePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
             fullPath = Path.GetFullPath(fullPath);
 
             return Path.GetRelativePath(basePath, fullPath);
+        }
+
+        private void ClearItems()
+        {
+            labelStatus.Text = "-";
+            labelStatus.Refresh();
+            listBoxAdd.Items.Clear();
+            listBoxAdd.Refresh();
+            listBoxUpdate.Items.Clear();
+            listBoxUpdate.Refresh();
+            listBoxDelete.Items.Clear();
+            listBoxDelete.Refresh();
+
+            addFiles.Clear();
+            updateFiles.Clear();
+            deleteFiles.Clear();
+            addFolders.Clear();
+            deleteFolders.Clear();
+
+            labelAdd.Text = "-";
+            labelModify.Text = "-";
+            labelDelete.Text = "-";
+        }
+
+        private void RemoveFilesToDelete()
+        {
+            foreach (var folder in deleteFolders)
+            {
+                deleteFiles.RemoveAll(x => x.StartsWith(folder));
+            }
         }
     }
 }

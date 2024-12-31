@@ -37,11 +37,17 @@
             label2 = new Label();
             listBoxAdd = new ListBox();
             buttonScan = new Button();
-            listBoxModify = new ListBox();
+            listBoxUpdate = new ListBox();
             listBoxDelete = new ListBox();
             progressBar1 = new ProgressBar();
             buttonSync = new Button();
-            labelFileSync = new Label();
+            labelStatus = new Label();
+            labelAdd = new Label();
+            labelModify = new Label();
+            labelDelete = new Label();
+            label3 = new Label();
+            label4 = new Label();
+            label5 = new Label();
             SuspendLayout();
             // 
             // label1
@@ -109,31 +115,32 @@
             listBoxAdd.Location = new Point(12, 129);
             listBoxAdd.Name = "listBoxAdd";
             listBoxAdd.ScrollAlwaysVisible = true;
-            listBoxAdd.Size = new Size(230, 280);
+            listBoxAdd.Size = new Size(230, 352);
             listBoxAdd.TabIndex = 6;
             // 
             // buttonScan
             // 
-            buttonScan.Location = new Point(12, 424);
+            buttonScan.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            buttonScan.Location = new Point(12, 519);
             buttonScan.Name = "buttonScan";
-            buttonScan.Size = new Size(75, 23);
+            buttonScan.Size = new Size(75, 32);
             buttonScan.TabIndex = 7;
             buttonScan.Text = "Scan";
             buttonScan.UseVisualStyleBackColor = true;
             buttonScan.Click += buttonScan_Click;
             // 
-            // listBoxModify
+            // listBoxUpdate
             // 
-            listBoxModify.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            listBoxModify.Font = new Font("Segoe UI", 7F);
-            listBoxModify.FormattingEnabled = true;
-            listBoxModify.HorizontalScrollbar = true;
-            listBoxModify.ItemHeight = 12;
-            listBoxModify.Location = new Point(263, 129);
-            listBoxModify.Name = "listBoxModify";
-            listBoxModify.ScrollAlwaysVisible = true;
-            listBoxModify.Size = new Size(230, 280);
-            listBoxModify.TabIndex = 8;
+            listBoxUpdate.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            listBoxUpdate.Font = new Font("Segoe UI", 7F);
+            listBoxUpdate.FormattingEnabled = true;
+            listBoxUpdate.HorizontalScrollbar = true;
+            listBoxUpdate.ItemHeight = 12;
+            listBoxUpdate.Location = new Point(263, 129);
+            listBoxUpdate.Name = "listBoxUpdate";
+            listBoxUpdate.ScrollAlwaysVisible = true;
+            listBoxUpdate.Size = new Size(230, 352);
+            listBoxUpdate.TabIndex = 8;
             // 
             // listBoxDelete
             // 
@@ -145,46 +152,111 @@
             listBoxDelete.Location = new Point(520, 129);
             listBoxDelete.Name = "listBoxDelete";
             listBoxDelete.ScrollAlwaysVisible = true;
-            listBoxDelete.Size = new Size(230, 280);
+            listBoxDelete.Size = new Size(230, 352);
             listBoxDelete.TabIndex = 9;
             // 
             // progressBar1
             // 
-            progressBar1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            progressBar1.Location = new Point(12, 464);
+            progressBar1.Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            progressBar1.Location = new Point(12, 557);
             progressBar1.Name = "progressBar1";
             progressBar1.Size = new Size(772, 23);
             progressBar1.TabIndex = 10;
             // 
             // buttonSync
             // 
-            buttonSync.Location = new Point(93, 424);
+            buttonSync.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            buttonSync.Location = new Point(93, 519);
             buttonSync.Name = "buttonSync";
-            buttonSync.Size = new Size(75, 23);
+            buttonSync.Size = new Size(75, 32);
             buttonSync.TabIndex = 11;
             buttonSync.Text = "Sync";
             buttonSync.UseVisualStyleBackColor = true;
             buttonSync.Click += buttonSync_Click;
             // 
-            // labelFileSync
+            // labelStatus
             // 
-            labelFileSync.AutoSize = true;
-            labelFileSync.Location = new Point(193, 428);
-            labelFileSync.Name = "labelFileSync";
-            labelFileSync.Size = new Size(12, 15);
-            labelFileSync.TabIndex = 12;
-            labelFileSync.Text = "-";
+            labelStatus.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            labelStatus.AutoSize = true;
+            labelStatus.Location = new Point(185, 528);
+            labelStatus.Name = "labelStatus";
+            labelStatus.Size = new Size(12, 15);
+            labelStatus.TabIndex = 12;
+            labelStatus.Text = "-";
+            // 
+            // labelAdd
+            // 
+            labelAdd.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            labelAdd.AutoSize = true;
+            labelAdd.Location = new Point(12, 488);
+            labelAdd.Name = "labelAdd";
+            labelAdd.Size = new Size(12, 15);
+            labelAdd.TabIndex = 13;
+            labelAdd.Text = "-";
+            // 
+            // labelModify
+            // 
+            labelModify.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            labelModify.AutoSize = true;
+            labelModify.Location = new Point(263, 488);
+            labelModify.Name = "labelModify";
+            labelModify.Size = new Size(12, 15);
+            labelModify.TabIndex = 14;
+            labelModify.Text = "-";
+            // 
+            // labelDelete
+            // 
+            labelDelete.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            labelDelete.AutoSize = true;
+            labelDelete.Location = new Point(520, 488);
+            labelDelete.Name = "labelDelete";
+            labelDelete.Size = new Size(12, 15);
+            labelDelete.TabIndex = 15;
+            labelDelete.Text = "-";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(12, 111);
+            label3.Name = "label3";
+            label3.Size = new Size(31, 15);
+            label3.TabIndex = 16;
+            label3.Text = "ADD";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(263, 111);
+            label4.Name = "label4";
+            label4.Size = new Size(49, 15);
+            label4.TabIndex = 17;
+            label4.Text = "UPDATE";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(520, 111);
+            label5.Name = "label5";
+            label5.Size = new Size(45, 15);
+            label5.TabIndex = 18;
+            label5.Text = "DELETE";
             // 
             // FormFileSync
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 509);
-            Controls.Add(labelFileSync);
+            ClientSize = new Size(800, 592);
+            Controls.Add(label5);
+            Controls.Add(label4);
+            Controls.Add(label3);
+            Controls.Add(labelDelete);
+            Controls.Add(labelModify);
+            Controls.Add(labelAdd);
+            Controls.Add(labelStatus);
             Controls.Add(buttonSync);
             Controls.Add(progressBar1);
             Controls.Add(listBoxDelete);
-            Controls.Add(listBoxModify);
+            Controls.Add(listBoxUpdate);
             Controls.Add(buttonScan);
             Controls.Add(listBoxAdd);
             Controls.Add(textBoxTarget);
@@ -210,10 +282,16 @@
         private Label label2;
         private ListBox listBoxAdd;
         private Button buttonScan;
-        private ListBox listBoxModify;
+        private ListBox listBoxUpdate;
         private ListBox listBoxDelete;
         private ProgressBar progressBar1;
         private Button buttonSync;
-        private Label labelFileSync;
+        private Label labelStatus;
+        private Label labelAdd;
+        private Label labelModify;
+        private Label labelDelete;
+        private Label label3;
+        private Label label4;
+        private Label label5;
     }
 }
